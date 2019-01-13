@@ -1,0 +1,189 @@
+<!--
+    Description: Display report for Audit Data Integrity. 
+                 It's has two parts:
+                 1) Shows discrepancies between audit info for Root/intermediate records and File Archive records
+                 2) Shows missing Root/Inter certs entries in File Archive object
+    Create Date: 3/21/2018
+    Updates    :
+-->
+<apex:page title="Audit Data Ingegrity Report" controller="AuditDataIntegrityReportController" showHeader="false" sideBar="false" readOnly="true">
+    <apex:sectionHeader title="File Archive And Audit Data Integrity Report"/>
+    <style>
+        thead td {
+            font-weight:bold;
+            color:white;
+            font-size:14px;
+        }
+        table td {
+            padding:10px;
+            
+        }
+        <!--table#innertable td {
+            border:1px solid black;
+        }-->
+    </style>
+    <div style="margin-top:20px;margin-left:10px;margin-right:10px">
+        <table border="1" width="100%" style="border-collapse:collapse;">
+            <thead>
+                <tr style="background-color:#9d9999;">
+                    <td width="20%">
+                        File Archive/Root/Inter Cert
+                    </td>
+                    <td width="20%">
+                        Audit Type
+                    </td>
+                    <td width="30%">
+                        Audit URL
+                    </td>
+                    <td width="10%">
+                        Statement Date
+                    </td>
+                    <td width="10%">
+                        Period Start Date
+                    </td>
+                    <td width="10%">
+                        Period End Date
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!lstWrapperAccounts}" var="wrapaccount" rendered="{!lstWrapperAccounts != null && lstWrapperAccounts.size > 0}">
+                    <tr style="background-color:#c9ecf7">
+                        <td>
+                            <apex:outputLink value="/{!wrapaccount.objFileArchive.Id}" target="_blank">{!wrapaccount.objFileArchive.Name}</apex:outputLink>
+                        </td>
+                        <td>
+                            {!wrapaccount.objFileArchive.Document_Type__c}
+                        </td>
+                        <td>
+                            {!wrapaccount.objFileArchive.External_Link__c}
+                        </td>
+                        <td>
+                            <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                <apex:param value="{!wrapaccount.objFileArchive.Audit_Statement_Date__c}" /> 
+                            </apex:outputText>
+                        </td>
+                        <td>
+                            <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                <apex:param value="{!wrapaccount.objFileArchive.Period_Start_Date__c}" /> 
+                            </apex:outputText>
+                        </td>
+                        <td>
+                            <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                <apex:param value="{!wrapaccount.objFileArchive.Period_End_Date__c}" /> 
+                            </apex:outputText>
+                        </td>
+                    </tr>
+                    <apex:repeat value="{!wrapaccount.lstWrapperAccount}" var="inneraccount">
+                        <apex:variable value="{!0}" var="index"/>
+                        <apex:repeat value="{!inneraccount.lstWrapperAuditDetail}" var="auditdetail">
+                            <tr>
+                                <apex:outputPanel rendered="{!index == 0}">
+                                    <td width="20%" rowspan="{!inneraccount.lstWrapperAuditDetail.size}">
+                                        <apex:outputLink value="/{!inneraccount.objAccount.Id}" target="_blank">{!inneraccount.objAccount.Name}</apex:outputLink>
+                                    </td>
+                                </apex:outputPanel>
+                                <td width="20%">
+                                    {!auditdetail.AuditType}
+                                </td>
+                                <td width="30%">
+                                    {!auditdetail.AuditURL}
+                                </td>
+                                <td width="10%" style="color:{!if(auditdetail.isDiffStatementDate,'red','')};font-weight:{!if(auditdetail.isDiffStatementDate,'bold','')};">
+                                    <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                        <apex:param value="{!auditdetail.StatementDate}" /> 
+                                    </apex:outputText>
+                                </td>
+                                <td width="10%" style="color:{!if(auditdetail.isDiffPeriodStartDate,'red','')};font-weight:{!if(auditdetail.isDiffPeriodStartDate,'bold','')};">
+                                    <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                        <apex:param value="{!auditdetail.PeriodStartDate}" /> 
+                                    </apex:outputText>
+                                </td>
+                                <td width="10%" style="color:{!if(auditdetail.isDiffPeriodEndDate,'red','')};font-weight:{!if(auditdetail.isDiffPeriodEndDate,'bold','')};">
+                                    <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                        <apex:param value="{!auditdetail.PeriodEndDate}" /> 
+                                    </apex:outputText>
+                                </td>
+                            </tr>
+                            <apex:variable value="{!index+1}" var="index"/>
+                        </apex:repeat>
+                    </apex:repeat>
+                </apex:repeat>
+                <apex:outputPanel rendered="{!lstWrapperAccounts == null || lstWrapperAccounts.size == 0}">
+                    <td colspan="100%">
+                        <i>No Records to display.</i>
+                    </td>
+                </apex:outputPanel>
+            </tbody>
+        </table>
+    </div>
+    
+    <apex:sectionHeader title="File Archive missing for Certs"/>
+    <div style="margin-top:20px;margin-left:10px;margin-right:10px">
+        <table border="1" width="100%" style="border-collapse:collapse;">
+            <thead>
+                <tr style="background-color:#9d9999;">
+                    <td width="20%">
+                        Root/Inter Cert
+                    </td>
+                    <td width="20%">
+                        Audit Type
+                    </td>
+                    <td width="30%">
+                        Audit URL
+                    </td>
+                    <td width="10%">
+                        Statement Date
+                    </td>
+                    <td width="10%">
+                        Period Start Date
+                    </td>
+                    <td width="10%">
+                        Period End Date
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!lstWrapAccountMissingArchive}" var="inneraccount" rendered="{!lstWrapAccountMissingArchive != null && lstWrapAccountMissingArchive.size > 0}">
+                    <apex:variable value="{!0}" var="count"/>
+                    <apex:repeat value="{!inneraccount.lstWrapperAuditDetail}" var="auditdetail">
+                        <tr>
+                            <apex:outputPanel rendered="{!count== 0}">
+                                <td width="20%" rowspan="{!inneraccount.lstWrapperAuditDetail.size}">
+                                    <apex:outputLink value="/{!inneraccount.objAccount.Id}" target="_blank">{!inneraccount.objAccount.Name}</apex:outputLink>
+                                </td>
+                            </apex:outputPanel>
+                            <td width="20%">
+                                {!auditdetail.AuditType}
+                            </td>
+                            <td width="30%">
+                                {!auditdetail.AuditURL}
+                            </td>
+                            <td width="10%" style="color:{!if(auditdetail.isDiffStatementDate,'red','')};font-weight:{!if(auditdetail.isDiffStatementDate,'bold','')};">
+                                <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                    <apex:param value="{!auditdetail.StatementDate}" /> 
+                                </apex:outputText>
+                            </td>
+                            <td width="10%" style="color:{!if(auditdetail.isDiffPeriodStartDate,'red','')};font-weight:{!if(auditdetail.isDiffPeriodStartDate,'bold','')};">
+                                <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                    <apex:param value="{!auditdetail.PeriodStartDate}" /> 
+                                </apex:outputText>
+                            </td>
+                            <td width="10%" style="color:{!if(auditdetail.isDiffPeriodEndDate,'red','')};font-weight:{!if(auditdetail.isDiffPeriodEndDate,'bold','')};">
+                                <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                    <apex:param value="{!auditdetail.PeriodEndDate}" /> 
+                                </apex:outputText>
+                            </td>
+                        </tr>
+                        <apex:variable value="{!count+1}" var="count"/>
+                    </apex:repeat>
+                </apex:repeat>
+                <apex:outputPanel rendered="{!lstWrapAccountMissingArchive == null || lstWrapAccountMissingArchive.size == 0}">
+                    <td colspan="100%">
+                        <i>No Records to display.</i>
+                    </td>
+                </apex:outputPanel>
+            </tbody>
+        </table>
+    </div>
+</apex:page>
